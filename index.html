@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ray</title>
+    <script type="text/javascript">
+
+        function fillCanvas() {
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+            var maxX = canvas.width - 1;
+            var maxY = canvas.height - 1;
+
+            ctx.fillText("maxX = " + maxX, 10, 10);
+            ctx.fillText("maxY = " + maxY, 30, 30);
+            ctx.fillStyle = "green";
+            ctx.fillRect(100, 200, 100, 100);
+
+            var imgData = ctx.getImageData(100,200,1,1);
+            imgData.data[0] = 255;
+            imgData.data[1] = 0;
+            imgData.data[2] = 255;
+            ctx.putImageData(imgData, 100, 200);
+            ctx.putImageData(imgData, 101, 200);
+            ctx.putImageData(imgData, 101, 201);
+            ctx.putImageData(imgData, 100, 201);
+
+            var words = document.getElementById("words");
+            words.textContent = "Hello world!";
+
+        }
+    </script>
+</head>
+<body onload="fillCanvas();">
+
+    <canvas id="canvas" style="border: 5px solid black" width="256" height="256"></canvas>
+
+    <div id="words"></div>
+
+</body>
+</html>
