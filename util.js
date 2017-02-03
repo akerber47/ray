@@ -15,15 +15,39 @@ function Vector3(x,y,z) {
     this.z = z || 0;
 }
 
-Vector3.prototype.normalize = function() {
-    var length = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    this.x = x / length;
-    this.y = y / length;
-    this.z = z / length;
-}
-
 var Point2 = Vector2;
 var Point3 = Vector3;
+
+// My very own terrible vector library.
+
+function v3add(v1,v2) {
+    return new Vector3(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
+}
+
+function v3scale(k,v) {
+    return new Vector3(k*v.x, k*v.y, k*v.z);
+}
+
+function v3sub(v1,v2) {
+    return v3add(v1,v3scale(-1,v2));
+}
+
+function v3dot(v1,v2) {
+    return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
+}
+
+function v3len(v) {
+    return Math.sqrt(v3dot(v,v));
+}
+
+function v3normalize(v) {
+    return v3scale(1 / v3len(v), v);
+}
+
+function v3cross(v1,v2) {
+    return new Vector3(v1.y*v2.z - v1.z*v2.y, v1.z*v2.x-v1.x*v2.z, v1.x*v2.y - v1.y*v2.x);
+}
+
 
 function Color3(r,g,b) {
     this.r = r || 0;
@@ -38,7 +62,7 @@ var Power3 = Color3;
 
 function Ray(origin,direction) {
     this.origin = origin || new Point3(); // Point3
-    this.direction = direction || new Color3(); // Vector3
+    this.direction = direction || new Vector3(); // Vector3
 }
 
 function RawImage(width,height) {

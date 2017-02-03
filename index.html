@@ -19,11 +19,16 @@
             ctx.fillStyle = "green";
             ctx.fillRect(0, 100, 100, 100);
 
-            var testData = ctx.getImageData(100,100,100,100);
+            var testData = ctx.getImageData(100,0,100,100);
+            var testData2 = ctx.getImageData(100,100,300,200);
             var testImage = initTestImage();
-            //rayTrace(testScene(), defaultCamera(), 0, 100, 0, 100, testImage);
+            var testImage2 = new RawImage(300, 200);
+            rayTrace(testScene(), defaultCamera(), 0, 100, 0, 100, testImage);
+            rayTrace(testScene(), defaultCamera(), 0, 300, 0, 200, testImage2);
             encodeImageData(testImage, 1.0, testData);
-            ctx.putImageData(testData,100,100);
+            encodeImageData(testImage2, 1.0, testData2);
+            ctx.putImageData(testData,100,0);
+            ctx.putImageData(testData2,100,100);
 
             var words = document.getElementById("words");
             words.textContent = imageDataToPpm(testData);
@@ -33,7 +38,7 @@
 </head>
 <body onload="fillCanvas();">
 
-    <canvas id="canvas" style="border: 5px solid black" width="256" height="256"></canvas>
+    <canvas id="canvas" style="border: 5px solid black" width="512" height="512"></canvas>
 
     <div id="words"></div>
 
