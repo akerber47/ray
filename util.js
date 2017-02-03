@@ -15,6 +15,13 @@ function Vector3(x,y,z) {
     this.z = z || 0;
 }
 
+Vector3.prototype.normalize = function() {
+    var length = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    this.x = x / length;
+    this.y = y / length;
+    this.z = z / length;
+}
+
 var Point2 = Vector2;
 var Point3 = Vector3;
 

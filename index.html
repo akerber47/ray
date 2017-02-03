@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Ray</title>
     <script type="text/javascript" src="util.js"></script>
+    <script type="text/javascript" src="scene.js"></script>
+    <script type="text/javascript" src="ray.js"></script>
     <script type="text/javascript">
 
         function fillCanvas() {
@@ -19,6 +21,7 @@
 
             var testData = ctx.getImageData(100,100,100,100);
             var testImage = initTestImage();
+            //rayTrace(testScene(), defaultCamera(), 0, 100, 0, 100, testImage);
             encodeImageData(testImage, 1.0, testData);
             ctx.putImageData(testData,100,100);
 

@@ -55,9 +55,9 @@ function testScene() {
                 new Point3(1.6,-0.5,-2)
             ],
             normals:[
-                new Vector3(0.0,0.6,1.0),
-                new Vector3(-0.4,-0.4,1.0),
-                new Vector3(0.4,-0.4,1.0)
+                (new Vector3(0.0,0.6,1.0)).normalize(),
+                (new Vector3(-0.4,-0.4,1.0)).normalize(),
+                (new Vector3(0.4,-0.4,1.0)).normalize()
             ],
             bsdf:{}
         }],
