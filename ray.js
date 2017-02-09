@@ -37,10 +37,52 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
 /* Given a ray and triangle, compute the barycentric coordinates of the point in the triangle
  * where the ray intersects it, and the distance from the ray origin to that point. If the ray
  * doesn't intersect it or it's within floating point errors, return Infinity for distance. In
- * that case brycentric coordinates are undefined.
+ * that case barycentric coordinates aren't valid. (Well, they're still coordinates, they just aren't between 0 and 1).
+ *
+ * Note that triangles will be invisible if they're almost parallel to the ray. To compensate for this
+ * and make sure we don't have "holes" in our shape near the edges, we "puff up" each triangle by epsilon2 - that is,
+ * we allow barycentric coordinates to be slightly negative as long as they're within epsilon2 of zero.
  */
 function intersect(ray, t) {
-    // compute the actual normal to the triangle, no bs.
+    // my own algorithm bc I'm too lazy to figure out the one in the book
+    const epsilon = 1e-7;
+    const epsilon2 = 1e-10;
+
+    // vectors in plane of triangle
+    var e1 = v3sub(t.vertex(1),t.vertex(0));
+    var e2 = v3sub(t.vertex(2),t.vertex(0));
+    // compute geometric normal (not those vertex normals, those are made up to smooth the surface)
+    var n = v3normalize(v3cross(e2,e1));
+    // note that bc of ccw vertex order, this points "out the back" of the triangle relative to its facing orientation.
+
+    // This dot product is positive if the triangle is facing the correct way for the ray direction to hit its front.
+    // We cull the almost-parallel rays to avoid divide-by-zero issues.
+    // Note that we don't look at the ray origin, so the ray could still point away from the triangle itself in space!
+    if (vdot(ray.direction, n) <= epsilon) {
+        return {
+            distance: INFINITY,
+            barycoords: [0, 0, 0]
+        };
+    }
+
+    // compute orthogonal distance from ray origin to point in plane of triangle (project onto normal), then
+    // use this to compute distance along ray.
+    var orthd = v3dot(v3sub(t.vertex(0), ray.origin), n);
+    var d = orthd / vdot(ray.direction, n);
+    // Note this may be negative if orthd is negative! This corresponds to the case where the ray orientation matches
+    // the triangle orientation but the triangle is "on the wrong side of the camera".
+    if (d <= 0) {
+        return {
+            distance: INFINITY,
+            barycoords: [0, 0, 0]
+        }
+    }
+
+    // compute intersection point relative to v0
+    var ept = v3sub(v3add(ray.origin,v3scale(d,ray.direction)), t.vertex(0));
+
+    //
+
 }
 
 /* Given a scene and camera, populate the given rawImage within the rectangle of
