@@ -5,14 +5,18 @@
 // A bunch of structs to hold bundles of numbers. All numbers floating point.
 
 function Vector2(x,y) {
-    this.x = x || 0;
-    this.y = y || 0;
+    this.x = x;
+    this.y = y;
 }
 
 function Vector3(x,y,z) {
-    this.x = x || 0;
-    this.y = y || 0;
-    this.z = z || 0;
+    if (typeof x != 'number' || typeof y != 'number' || typeof z != 'number') {
+        throw new TypeError("Expected scalar components, received: " +
+            x.toString() + ", " + y.toString() + ", " + z.toString());
+    }
+    this.x = x;
+    this.y = y;
+    this.z = z;
 }
 
 var Point2 = Vector2;
@@ -20,11 +24,25 @@ var Point3 = Vector3;
 
 // My very own terrible vector library.
 
-function v3add(v1,v2) {
-    return new Vector3(v1.x+v2.x, v1.y+v2.y, v1.z+v2.z);
+function v3add() {
+    var x = 0;
+    var y = 0;
+    var z = 0;
+    for (var i = 0; i < arguments.length; i++) {
+        if (!(arguments[i] instanceof Vector3)) {
+            throw new TypeError("Expected vector arguments, received arguments[" + i + "]: " + arguments[i].toString());
+        }
+        x += arguments[i].x;
+        y += arguments[i].y;
+        z += arguments[i].z;
+    }
+    return new Vector3(x, y, z);
 }
 
 function v3scale(k,v) {
+    if (!(typeof k == 'number' && v instanceof Vector3)) {
+        throw new TypeError("Expected scalar and vector, received: " + k.toString() + ", " + v.toString());
+    }
     return new Vector3(k*v.x, k*v.y, k*v.z);
 }
 
@@ -33,6 +51,9 @@ function v3sub(v1,v2) {
 }
 
 function v3dot(v1,v2) {
+    if (!(v1 instanceof Vector3 && v2 instanceof Vector3)) {
+        throw new TypeError("Expected two vectors, received: " + v1.toString() + ", " + v2.toString());
+    }
     return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
 }
 
