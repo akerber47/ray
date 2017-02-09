@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Ray</title>
-    <script type="text/javascript" src="util.js"></script>
-    <script type="text/javascript" src="scene.js"></script>
-    <script type="text/javascript" src="ray.js"></script>
+    <script type="text/javascript" src="src/util.js"></script>
+    <script type="text/javascript" src="src/scene.js"></script>
+    <script type="text/javascript" src="src/ray.js"></script>
     <script type="text/javascript">
 
         function fillCanvas() {
@@ -19,12 +19,15 @@
             ctx.fillStyle = "green";
             ctx.fillRect(0, 100, 100, 100);
 
+            const X = 800;
+            const Y = 600;
+
             var testData = ctx.getImageData(100,0,100,100);
-            var testData2 = ctx.getImageData(100,100,300,200);
+            var testData2 = ctx.getImageData(100,100,X,Y);
             var testImage = initTestImage();
-            var testImage2 = new RawImage(300, 200);
+            var testImage2 = new RawImage(X, Y);
             rayTrace(testScene(), defaultCamera(), 0, 100, 0, 100, testImage);
-            rayTrace(testScene(), defaultCamera(), 0, 300, 0, 200, testImage2);
+            rayTrace(testScene(), defaultCamera(), 0, X, 0, Y, testImage2);
             encodeImageData(testImage, 1.0, testData);
             encodeImageData(testImage2, 1.0, testData2);
             ctx.putImageData(testData,100,0);
@@ -38,7 +41,7 @@
 </head>
 <body onload="fillCanvas();">
 
-    <canvas id="canvas" style="border: 5px solid black" width="512" height="512"></canvas>
+    <canvas id="canvas" style="border: 5px solid black" width="800" height="600"></canvas>
 
     <div id="words"></div>
 

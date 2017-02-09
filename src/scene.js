@@ -42,28 +42,29 @@ function Camera(zNear, zFar, fieldOfViewX) {
     this.fieldOfViewX = fieldOfViewX;
 }
 
+// scene/camera copied from book
 function defaultCamera() {
     return new Camera(-0.1, -100.0, Math.PI/2);
 }
 
 function testScene() {
-    return {
-        triangles:[{
-            vertices:[
+    return new Scene(
+        [new Triangle(
+            [
                 new Point3(0,1,-2),
                 new Point3(-1.9,-1,-2),
                 new Point3(1.6,-0.5,-2)
             ],
-            normals:[
-                (new Vector3(0.0,0.6,1.0)).normalize(),
-                (new Vector3(-0.4,-0.4,1.0)).normalize(),
-                (new Vector3(0.4,-0.4,1.0)).normalize()
+            [
+                v3normalize(new Vector3(0.0,0.6,1.0)),
+                v3normalize(new Vector3(-0.4,-0.4,1.0)),
+                v3normalize(new Vector3(0.4,-0.4,1.0))
             ],
-            bsdf:{}
-        }],
-        lights:[{
-            position: new Point3(1.0,3.0,1.0),
-            power: new Power3(10,10,10)
-        }]
-    }
+            {}
+        )],
+        [new Light(
+            new Point3(1.0,3.0,1.0),
+            new Power3(10,10,10)
+        )]
+    )
 }

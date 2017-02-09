@@ -36,9 +36,10 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
  * doesn't intersect it or it's within floating point errors, return Infinity for distance. In
  * that case barycentric coordinates aren't valid. (Well, they're still coordinates, they just aren't between 0 and 1).
  *
- * Note that triangles will be invisible if they're almost parallel to the ray. To compensate for this
- * and make sure we don't have "holes" in our shape near the edges, we "puff up" each triangle by epsilon2 - that is,
- * we allow barycentric coordinates to be slightly negative as long as they're within epsilon2 of zero.
+ * Note that triangles will be considered non-intersecting if they're almost parallel to the ray.
+ * To compensate for this, and make sure we don't have "holes" in our shape near the edges, we "puff up" each triangle
+ * by epsilon2 - that is, we allow barycentric coordinates to be slightly negative as long as they're within epsilon2
+ * of zero (and in this case, we say they are intersecting).
  */
 function intersect(ray, t) {
     // my own algorithm bc I'm too lazy to figure out the one in the book
@@ -55,9 +56,9 @@ function intersect(ray, t) {
     // This dot product is positive if the triangle is facing the correct way for the ray direction to hit its front.
     // We cull the almost-parallel rays to avoid divide-by-zero issues.
     // Note that we don't look at the ray origin, so the ray could still point away from the triangle itself in space!
-    if (vdot(ray.direction, n) <= epsilon) {
+    if (v3dot(ray.direction, n) <= epsilon) {
         return {
-            distance: INFINITY,
+            distance: Infinity,
             barycoords: [0, 0, 0]
         };
     }
@@ -65,20 +66,37 @@ function intersect(ray, t) {
     // compute orthogonal distance from ray origin to point in plane of triangle (project onto normal), then
     // use this to compute distance along ray.
     var orthd = v3dot(v3sub(t.vertex(0), ray.origin), n);
-    var d = orthd / vdot(ray.direction, n);
+    var d = orthd / v3dot(ray.direction, n);
     // Note this may be negative if orthd is negative! This corresponds to the case where the ray orientation matches
     // the triangle orientation but the triangle is "on the wrong side of the camera".
     if (d <= 0) {
         return {
-            distance: INFINITY,
+            distance: Infinity,
             barycoords: [0, 0, 0]
         }
     }
 
-    // compute vector in plane of triangle from v0 to intersection pt
+    // compute vector in plane of triangle from v0 to intersection pt. Note that if d is very large and triangle
+    // is both very large and very far away, there could be floating point errors? Maybe?
     var ept = v3sub(v3add(ray.origin,v3scale(d,ray.direction)), t.vertex(0));
 
-    //
+    // decompose this vector into e1/e2 components to compute barycentric coordinates.
+    var b1 = v3dot(ept,v3normalize(e1));
+    var b2 = v3dot(ept, v3normalize(e2));
+    var b0 = 1 - b1 - b2;
+
+    // check if barycentric coords lie outside the "puffed-up" triangle.
+    if (b0 < -epsilon2 || b1 < -epsilon2 || b2 < -epsilon2) {
+        return {
+            distance: Infinity,
+            barycoords: [b0, b1, b2]
+        }
+    } else {
+        return {
+            distance: d,
+            barycoords: [b0, b1, b2]
+        }
+    }
 
 }
 
@@ -98,7 +116,8 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
 
             // Loop through the triangles, and find the closest one it intersects. Store radiance from that tracing.
             var minDist = Infinity;
-            var radiance = new Radiance3();
+            // Every pixel is black by default.
+            var radiance = new Radiance3(0, 0, 0);
 
             for (var i = 0; i < scene.triangles.length; i++) {
                 var t = scene.triangles[i];
@@ -112,19 +131,21 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
                     // compute point of intersection
                     var pt = v3add(ray.origin, v3scale(d, ray.direction));
                     // interpolate vertex normal using barycentric coords
-                    var n = v3normalize(v3add(v3add(
-                        v3scale(bc[0], t.normal(0),
+                    var n = v3normalize(v3add(
+                        v3scale(bc[0], t.normal(0)),
                         v3scale(bc[1], t.normal(1)),
-                        v3scale(bc[2], t.normal(2))))));
+                        v3scale(bc[2], t.normal(2))));
 
                     // We shade based on vertex normal and opposite ray direction (the "physical ray")
                     //radiance = shade(scene, t, pt, n, v3scale(-1, ray.direction))
-                    // for testing: everything's white
-                    radiance = new Radiance3(1,1,1);
+                    // for testing: every intersection is white
+                    // radiance = new Radiance3(1, 1, 1);
+                    // for fancier testing: shade according to barycentric coords
+                    radiance = new Radiance3(bc[0], bc[1], bc[2]);
                 }
-                // compute ray-triangle intersections
             }
-
+            // Finally, shade the image accordingly.
+            rawImage.set(x, y, radiance);
         }
     }
 }
