@@ -78,7 +78,7 @@ function intersect(ray, t) {
         }
     }
 
-    // compute intersection point relative to v0
+    // compute vector in plane of triangle from v0 to intersection pt
     var ept = v3sub(v3add(ray.origin,v3scale(d,ray.direction)), t.vertex(0));
 
     //
