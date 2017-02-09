@@ -49,7 +49,7 @@ describe("Vector3 Operations", function() {
         jasmine.addCustomEqualityTester(v3eq);
     });
 
-    var v0 = new Vector3(0, 0, 0);
+    var e0 = new Vector3(0, 0, 0);
     var e1 = new Vector3(1, 0, 0);
     var e2 = new Vector3(0, 1, 0);
     var e3 = new Vector3(0, 0, 1);
@@ -58,9 +58,9 @@ describe("Vector3 Operations", function() {
         expect(v3add(e1, e2)).toEqual(new Vector3(1, 1, 0));
         expect(v3add(e1, e1, e2)).toEqual(new Vector3(2, 1, 0));
         expect(v3add(e3, v3add(e1, e2))).toEqual(new Vector3(1, 1, 1));
-        expect(v3add(v0, e1)).toEqual(e1);
+        expect(v3add(e0, e1)).toEqual(e1);
         expect(v3add(e1)).toEqual(e1);
-        expect(v3add()).toEqual(v0);
+        expect(v3add()).toEqual(e0);
 
         expect(function() {
             v3add(e1, 1);
@@ -73,7 +73,7 @@ describe("Vector3 Operations", function() {
 
     it("Vector3 scaling", function() {
         expect(v3scale(5, e1)).toEqual(new Vector3(5, 0, 0));
-        expect(v3scale(0, e1)).toEqual(v0);
+        expect(v3scale(0, e1)).toEqual(e0);
         expect(v3add(v3scale(3, e1),v3scale(4,e2),v3scale(5,e3))).toEqual(new Vector3(3, 4, 5));
 
         expect(function() {
@@ -91,7 +91,7 @@ describe("Vector3 Operations", function() {
         expect(v3dot(v, e1)).toEqual(3);
         expect(v3dot(v, v)).toEqual(50);
         expect(v3dot(v, v2)).toEqual(19);
-        expect(v3dot(v, v0)).toEqual(0);
+        expect(v3dot(v, e0)).toEqual(0);
 
         expect(function() {
             v3dot(e1, 1);
@@ -106,5 +106,25 @@ describe("Vector3 Operations", function() {
 
         expect(v3normalize(e3)).toEqual(e3);
         expect(v3normalize(v2)).toEqual(new Vector3(2/3, 2/3, 1/3));
+    });
+
+    it("Vector3 cross product", function() {
+        expect(v3cross(e1, e2)).toEqual(e3);
+        expect(v3cross(e2, e3)).toEqual(e1);
+        expect(v3cross(e3, e1)).toEqual(e2);
+        expect(v3cross(e2, e1)).toEqual(v3scale(-1, e3));
+        expect(v3cross(e3, e2)).toEqual(v3scale(-1, e1));
+        expect(v3cross(e1, e3)).toEqual(v3scale(-1, e2));
+
+        expect(v3cross(e1, e1)).toEqual(e0);
+        expect(v3cross(e1, e0)).toEqual(e0);
+
+        expect(function() {
+            v3cross(e1, 1);
+        }).toThrowError(TypeError);
+
+        expect(function() {
+            v3cross(1, e1);
+        }).toThrowError(TypeError);
     });
 });
