@@ -28,10 +28,7 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
     var rayv = new Vector3(rayX,rayY,rayZ);
 
     // Finally, scale the whole thing to start on the znear plane. Remember zNear < 0
-    return {
-        origin: v3scale(-zNear, rayv),
-        direction: v3normalize(rayv)
-    }
+    return new Ray(v3scale(-zNear, rayv), v3normalize(rayv));
 }
 
 /* Given a ray and triangle, compute the barycentric coordinates of the point in the triangle

@@ -88,8 +88,12 @@ var Power3 = Color3;
 // Some (slightly) fancier stuff
 
 function Ray(origin,direction) {
-    this.origin = origin || new Point3(); // Point3
-    this.direction = direction || new Vector3(); // Vector3, unit length
+    if (!(origin instanceof Vector3 && direction instanceof Vector3)) {
+        throw new TypeError("Expected vector origin and direction, received: " +
+            origin.toString() + ", " + direction.toString());
+    }
+    this.origin = origin;
+    this.direction = direction; // by convention, unit length
 }
 
 function RawImage(width,height) {
