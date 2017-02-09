@@ -76,14 +76,47 @@ function v3normalize(v) {
     return v3scale(1 / v3len(v), v);
 }
 
+function v3dist(v1,v2) {
+    return v3len(v3sub(v1,v2));
+}
+
 function Color3(r,g,b) {
-    this.r = r || 0;
-    this.g = g || 0;
-    this.b = b || 0;
+    if (typeof r != 'number' || typeof g != 'number' || typeof b != 'number') {
+        throw new TypeError("Expected scalar components, received: " +
+            r.toString() + ", " + g.toString() + ", " + b.toString());
+    }
+    this.r = r;
+    this.g = g;
+    this.b = b;
 }
 
 var Radiance3 = Color3;
 var Power3 = Color3;
+
+/* We also want to be able to add and scale colors. No fancier operations though.
+ * (Dot and cross products of colors are meaningless)
+ */
+function c3add() {
+    var r = 0;
+    var g = 0;
+    var b = 0;
+    for (var i = 0; i < arguments.length; i++) {
+        if (!(arguments[i] instanceof Color3)) {
+            throw new TypeError("Expected color arguments, received arguments[" + i + "]: " + arguments[i].toString());
+        }
+        r += arguments[i].r;
+        g += arguments[i].g;
+        b += arguments[i].b;
+    }
+    return new Color3(r, g, b);
+}
+
+function c3scale(k,c) {
+    if (!(typeof k == 'number' && c instanceof Color3)) {
+        throw new TypeError("Expected scalar and color, received: " + k.toString() + ", " + c.toString());
+    }
+    return new Color3(k*c.r, k*c.g, k*c.b);
+}
 
 // Some (slightly) fancier stuff
 

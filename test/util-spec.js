@@ -30,7 +30,7 @@ describe("Vector3 Equality", function () {
 
     it("Vector3 and Point3 are comparable", function () {
         expect(new Vector3(1, 2, 3)).toEqual(new Point3(1, 2, 3));
-    })
+    });
 
     it("Vector3 comparisons work with Infinity and NaN", function () {
         var v = new Vector3(0, 0, Infinity);

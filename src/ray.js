@@ -97,7 +97,42 @@ function intersect(ray, t) {
             barycoords: [b0, b1, b2]
         }
     }
+}
 
+/* Given a scene, triangle, point in the triangle, and opposite ray direction
+ * (the "eye ray"), shade the point (compute its radiance) using the light sources in the scene and the material
+ * / BSDF properties of the triangle, reflections with other triangles, etc.
+ *
+ * For now, just do a simple sum over light sources.
+ */
+function shade(scene, t, pt, n, eyedir) {
+
+    // Point starts out black. Every light will add some radiance to it.
+    var radiance = new Radiance3(0, 0, 0);
+
+    for (var i = 0; i < scene.lights.length; i++) {
+        // For now, no shadows. All lights hit all points.
+
+        // Compute diistance to light, and incoming direction from that light.
+        var lightv = v3sub(scene.lights[i].position, pt);
+        var lightd = v3len(lightv);
+        var lightdir = v3normalize(lightv);
+
+        // Lightdir points from pt to light. Check if light is on correct side of triangle.
+        if (v3dot(n, lightdir) > 0) {
+
+            // Light intensity is spread evenly about the sphere of radius lightd about the source. Calculate
+            // how much makes it to our point.
+            var inrad = c3scale(1 / (4 * Math.PI * lightd * lightd), scene.lights[i].power);
+
+            // Scatter using triangle BSDF
+            scatterrad = t.bsdf.scatter(n, lightdir, eyedir, inrad);
+            // Scale by incident dot product (tilted surfaces are dimmer, light spread over more area)
+            radiance = c3add(radiance, c3scale(v3dot(n, lightdir), scatterrad));
+}
+    }
+
+    return radiance;
 }
 
 /* Given a scene and camera, populate the given rawImage within the rectangle of
@@ -116,13 +151,12 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
 
             // Loop through the triangles, and find the closest one it intersects. Store radiance from that tracing.
             var minDist = Infinity;
-            // Every pixel is black by default.
-            var radiance = new Radiance3(0, 0, 0);
+            // Every pixel is dark grey by default.
+            var radiance = new Radiance3(0.1, 0.1, 0.1);
 
             for (var i = 0; i < scene.triangles.length; i++) {
                 var t = scene.triangles[i];
-                // fancy dot product calculation to find where ray intersects (if it intersects at all)
-                // returns barycentric coordinates of intersection point in triangle, and its distance from ray origin.
+                // calculate where (if at all) ray intersects triangle.
                 var iret = intersect(ray, t);
                 var d = iret.distance;
                 var bc = iret.barycoords;
@@ -130,18 +164,19 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
                 if (d < minDist) {
                     // compute point of intersection
                     var pt = v3add(ray.origin, v3scale(d, ray.direction));
-                    // interpolate vertex normal using barycentric coords
+
+                    // interpolate vertex normal using barycentric coords (for shading)
                     var n = v3normalize(v3add(
                         v3scale(bc[0], t.normal(0)),
                         v3scale(bc[1], t.normal(1)),
                         v3scale(bc[2], t.normal(2))));
 
                     // We shade based on vertex normal and opposite ray direction (the "physical ray")
-                    //radiance = shade(scene, t, pt, n, v3scale(-1, ray.direction))
+                    radiance = shade(scene, t, pt, n, v3scale(-1, ray.direction));
                     // for testing: every intersection is white
                     // radiance = new Radiance3(1, 1, 1);
                     // for fancier testing: shade according to barycentric coords
-                    radiance = new Radiance3(bc[0], bc[1], bc[2]);
+                    // radiance = new Radiance3(bc[0], bc[1], bc[2]);
                 }
             }
             // Finally, shade the image accordingly.

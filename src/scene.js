@@ -60,11 +60,43 @@ function testScene() {
                 v3normalize(new Vector3(-0.4,-0.4,1.0)),
                 v3normalize(new Vector3(0.4,-0.4,1.0))
             ],
-            {}
+            {
+                scatter: function(n, inv, outv, inrad) {
+                    /*
+                    // Basic lambertian scattering. Obviously this code shouldn't be here, but whatever.
+                    // Lambertian scattering is independent of viewing angle (it's for "matte objects"). Just multiply
+                    // incoming radiance based on the lambertian.
+                    const L = [0, 1.0, 0]; // Lambertian for "a green triangle"
+                    return c3scale(1/Math.PI, new Radiance3(inrad.r * L[0], inrad.g * L[1], inrad.b * L[2]));
+                    */
+
+                    // Blinn-Phong glossy scattering
+                    const L = [0, 0.8, 0]; // matte green lambertian underneath
+                    const G = [0.2, 0.2, 0.2]; // shiny white (reflects all colors) gloss
+                    const S = 100; // glossy sharpness
+
+                    // Incoming angle = outgoing angle, so sum of incoming and outgoing should be close to proportional
+                    // to the normal to get exciting glossiness.
+                    var v = v3normalize(v3add(inv, outv));
+
+                    var kGloss;
+                    if (v3dot(v, n) > 0) {
+                        kGloss = (S+8) * Math.pow(v3dot(v,n), S) / 8;
+                    } else {
+                        kGloss = 0;
+                    }
+                    return c3scale(1/Math.PI, new Radiance3(
+                        inrad.r * (L[0] + kGloss*G[0]),
+                        inrad.g * (L[1] + kGloss*G[1]),
+                        inrad.b * (L[2] + kGloss*G[2])
+                    ));
+                }
+            }
         )],
         [new Light(
             new Point3(1.0,3.0,1.0),
-            new Power3(10,10,10)
+            //new Power3(10,10,10)
+            new Power3(20,20,20)
         )]
     )
 }
