@@ -115,9 +115,7 @@ function shade(scene, t, pt, n, eyedir) {
     var radiance = new Radiance3(0, 0, 0);
 
     for (var i = 0; i < scene.lights.length; i++) {
-        // For now, no shadows. All lights hit all points.
-
-        // Compute diistance to light, and incoming direction from that light.
+        // Compute diistance to light, and outgoing direction from pt to that light.
         var lightv = v3sub(scene.lights[i].position, pt);
         var lightd = v3len(lightv);
         var lightdir = v3normalize(lightv);
@@ -125,15 +123,30 @@ function shade(scene, t, pt, n, eyedir) {
         // Lightdir points from pt to light. Check if light is on correct side of triangle.
         if (v3dot(n, lightdir) > 0) {
 
-            // Light intensity is spread evenly about the sphere of radius lightd about the source. Calculate
-            // how much makes it to our point.
-            var inrad = c3scale(1 / (4 * Math.PI * lightd * lightd), scene.lights[i].power);
+            // Check for shadows. Build "shadow ray" starting near pt, just off the triangle, and traveling
+            // toward light source. Check for intersections closer than the light source.
+            const shadowepsilon = 1e-4;
+            var shadowray = new Ray(v3add(pt, v3scale(shadowepsilon, lightdir)), lightdir);
+            var visible = true;
+            for (var j = 0; j < scene.triangles.length; j++) {
+                d = intersect(shadowray, scene.triangles[j]).distance;
+                if (d < lightd - shadowepsilon) {
+                    visible = false;
+                    break;
+                }
+            }
+            // Now, if there were no shadows, compute incoming radiance and scattering.
+            if (visible) {
+                // Light intensity is spread evenly about the sphere of radius lightd about the source. Calculate
+                // how much makes it to our point.
+                var inrad = c3scale(1 / (4 * Math.PI * lightd * lightd), scene.lights[i].power);
 
-            // Scatter using triangle BSDF
-            scatterrad = t.bsdf.scatter(n, lightdir, eyedir, inrad);
-            // Scale by incident dot product (tilted surfaces are dimmer, light spread over more area)
-            radiance = c3add(radiance, c3scale(v3dot(n, lightdir), scatterrad));
-}
+                // Scatter using triangle BSDF
+                scatterrad = t.bsdf.scatter(n, lightdir, eyedir, inrad);
+                // Scale by incident dot product (tilted surfaces are dimmer, light spread over more area)
+                radiance = c3add(radiance, c3scale(v3dot(n, lightdir), scatterrad));
+            }
+        }
     }
 
     return radiance;
