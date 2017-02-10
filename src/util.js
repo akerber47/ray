@@ -133,6 +133,11 @@ function RawImage(width,height) {
     this.width = width;
     this.height = height;
     this.data = []; // array of Radiance3
+    for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+            this.data[i + width * j] = 0;
+        }
+    }
 }
 
 RawImage.prototype.get = function(x,y) {

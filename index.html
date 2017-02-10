@@ -21,19 +21,14 @@
             ctx.fillRect(0, 100, 100, 100);
             */
 
-            const X = 2000;
-            const Y = 2000;
+            var X = canvas.width;
+            var Y = canvas.height;
 
-            // var testData = ctx.getImageData(100,0,100,100);
-            var testData2 = ctx.getImageData(0,0,X,Y);
-            // var testImage = initTestImage();
-            var testImage2 = new RawImage(X, Y);
-            // rayTrace(testScene(), defaultCamera(), 0, 100, 0, 100, testImage);
-            rayTrace(testScene(), defaultCamera(), 0, X, 0, Y, testImage2);
-            // encodeImageData(testImage, 1.0, testData);
-            encodeImageData(testImage2, 1.0, testData2);
-            // ctx.putImageData(testData,100,0);
-            ctx.putImageData(testData2,0,0);
+            var testData = ctx.getImageData(0,0,X,Y);
+            var testImage = new RawImage(X, Y);
+            rayTrace(testScene2(), defaultCamera(), 0, X, 0, Y, testImage);
+            encodeImageData(testImage, 1.0, testData);
+            ctx.putImageData(testData,0,0);
 
             // for (very tedious) pixel-by-pixel debugging
             // var words = document.getElementById("words");
@@ -45,7 +40,7 @@
 <body onload="fillCanvas();">
 
     <!-- <canvas id="canvas" style="border: 5px solid black" width="1000" height="700"></canvas> -->
-    <canvas id="canvas" width="2000" height="2000"></canvas>
+    <canvas id="canvas" width="800" height="500"></canvas>
 
     <div id="words"></div>
 

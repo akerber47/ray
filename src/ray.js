@@ -80,9 +80,13 @@ function intersect(ray, t) {
     // is both very large and very far away, there could be floating point errors? Maybe?
     var ept = v3sub(v3add(ray.origin,v3scale(d,ray.direction)), t.vertex(0));
 
-    // decompose this vector into e1/e2 components to compute barycentric coordinates.
-    var b1 = v3dot(ept,v3normalize(e1));
-    var b2 = v3dot(ept, v3normalize(e2));
+    // comppute vectors in plane of triangle orthogonal to e1 / e2, respectively. Use these to compute barycoords.
+    // Choose sign so that v3dot(e1perp,e2), v3dot(e2perp,e1) are both positive.
+    var e1perp = v3cross(e1, n);
+    var e2perp = v3cross(n, e2);
+
+    var b1 = v3dot(ept,e2perp) / v3dot(e1, e2perp);
+    var b2 = v3dot(ept, e1perp) / v3dot(e2, e1perp);
     var b0 = 1 - b1 - b2;
 
     // check if barycentric coords lie outside the "puffed-up" triangle.
@@ -151,8 +155,8 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
 
             // Loop through the triangles, and find the closest one it intersects. Store radiance from that tracing.
             var minDist = Infinity;
-            // Every pixel is dark grey by default.
-            var radiance = new Radiance3(0.1, 0.1, 0.1);
+            // Every pixel is dark blue by default.
+            var radiance = new Radiance3(0.02, 0.02, 0.05);
 
             for (var i = 0; i < scene.triangles.length; i++) {
                 var t = scene.triangles[i];
@@ -162,6 +166,7 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
                 var bc = iret.barycoords;
                 // If it's closer than all previous triangles, re-shade accordingly.
                 if (d < minDist) {
+                    minDist = d;
                     // compute point of intersection
                     var pt = v3add(ray.origin, v3scale(d, ray.direction));
 

@@ -88,6 +88,8 @@ function makeLambertianBsdf(L) {
     }
 }
 
+// first scene in the book. A single triangle.
+
 function testScene() {
     return new Scene(
         [new Triangle(
@@ -107,6 +109,68 @@ function testScene() {
                     [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss
                     100)
         )],
+        [new Light(
+            new Point3(1.0,3.0,1.0),
+            //new Power3(10,10,10)
+            new Power3(20,20,20)
+        )]
+    )
+}
+
+// The second scene in the book, with front/back of triangle and a ground made of 2 triangles
+
+function testScene2() {
+    const GROUNDY = -1;
+    const GROUNDN = new Vector3(0, 1, 0);
+    return new Scene([
+        new Triangle(
+            [
+                new Point3(0,1,-2),
+                new Point3(-1.9,-1,-2),
+                new Point3(1.6,-0.5,-2)
+            ],
+            [
+                v3normalize(new Vector3(0.0,0.6,1.0)),
+                v3normalize(new Vector3(-0.4,-0.4,1.0)),
+                v3normalize(new Vector3(0.4,-0.4,1.0))
+            ],
+            makeGlossyBsdf(
+                [0, 0.8, 0], // matte green underneath
+                [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss
+                100)),
+        // the back: same vertices / normals, with opposite orientation.
+        new Triangle(
+            [
+                new Point3(-1.9,-1,-2),
+                new Point3(0,1,-2),
+                new Point3(1.6,-0.5,-2)
+            ],
+            [
+                v3normalize(new Vector3(-0.4,-0.4,1.0)),
+                v3normalize(new Vector3(0.0,0.6,1.0)),
+                v3normalize(new Vector3(0.4,-0.4,1.0))
+            ],
+            makeGlossyBsdf(
+                [0, 0.8, 0], // matte green underneath
+                [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss
+                100)),
+        new Triangle(
+            [
+                new Point3(-10, GROUNDY, -10),
+                new Point3(-10, GROUNDY, -0.01),
+                new Point3(10, GROUNDY, -0.01)
+            ],
+            [GROUNDN, GROUNDN, GROUNDN],
+            makeLambertianBsdf([0.8,0.8,0.8])),
+        new Triangle(
+            [
+                new Point3(-10, GROUNDY, -10),
+                new Point3(10, GROUNDY, -0.01),
+                new Point3(10, GROUNDY, -10)
+            ],
+            [GROUNDN, GROUNDN, GROUNDN],
+            makeLambertianBsdf([0.8,0.8,0.8]))
+        ],
         [new Light(
             new Point3(1.0,3.0,1.0),
             //new Power3(10,10,10)
