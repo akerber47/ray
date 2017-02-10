@@ -174,7 +174,7 @@ function testScene2() {
         [new Light(
             new Point3(1.0,3.0,1.0),
             //new Power3(10,10,10)
-            new Power3(20,20,20)
+            new Power3(30,30,30)
         )]
     )
 }
