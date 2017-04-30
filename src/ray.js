@@ -32,9 +32,9 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
 }
 
 /* Given a point in space, image dimensions, and some camera attributes, compute the
- * corresponding pixel x and y. Inverse of above function, sort of.
+ * corresponding x and y in "pixel coordinates" (possibly non-integers) Partial inverse of above pxToRay.
  */
-function ptToPx(pt,width,height,fieldOfViewX) {
+function ptToPxCoords(pt,width,height,fieldOfViewX) {
     var aspect = height / width;
 
     // Project pt along line thru origin onto z = -1 plane.
@@ -47,11 +47,42 @@ function ptToPx(pt,width,height,fieldOfViewX) {
     var sqX = projX / Math.tan(fieldOfViewX * 0.5);
     var sqY = -projY / (Math.tan(fieldOfViewX * 0.5) * aspect);
 
-    // Round and convert to nearest pixel center
-    var x = Math.round((((sqX / 2.0) + 0.5) * width) - 0.5);
-    var y = Math.round((((sqY / 2.0) + 0.5) * height) - 0.5);
+    // Convert points in the square to pixel coords, by rescaling and shifting origin.
+    var x = ((sqX / 2.0) + 0.5) * width;
+    var y = ((sqY / 2.0) + 0.5) * height;
 
     return new Vector2(x, y);
+}
+
+/* Given a point in space, image dimensions, and some camera attributes, compute the
+ * corresponding pixel x and y. Inverse of pxToRay, sort of.
+ *
+ * No longer use this, for accuracy reasons with 2d barycentric coords. This is a simple transformation
+ * on top of ptToPxCoords, which we now use directly.
+ */
+function ptToPx(pt,width,height,fieldOfViewX) {
+    var pxCoords = ptToPxCoords(pt, width, height, fieldOfViewX);
+    // Compute the closest pixel center to those pixel coords.
+    return new Vector2(Math.round(pxCoords.x - 0.5), Math.round(pxCoords.y - 0.5));
+}
+
+/* Given 3 2d points (triangle vertices), and a 4th 2d point, compute the barycentric coordinates
+ * of that point in the triangle given by the first 3 points.
+ * Return in an array of three numbers corresponding to the 3 triangle vertices (same order).
+ */
+function bary2d(v0, v1, v2, pt) {
+    var w1 = v2sub(v1, v0);
+    var w2 = v2sub(v2, v0);
+    var wpt = v2sub(pt, v0);
+
+    // Could compute this directly with 2 equations 2 unknowns, or do a bunch of geometric projection
+    // tricks to get same result. I'll just implement the short way.
+    var w1perp = new Vector2(w1.y, -w1.x);
+    var w2perp = new Vector2(w2.y, -w2.x);
+
+    var k1 = v2dot(w2perp, wpt) / v2dot(w2perp, w1);
+    var k2 = v2dot(w1perp, wpt) / v2dot(w1perp, w2);
+    return [1-k1-k2, k1, k2];
 }
 
 /* Given a ray and triangle, compute the barycentric coordinates of the point in the triangle
@@ -189,6 +220,7 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
             //console.log(ray.origin.x, ray.origin.y, ray.origin.z, ray.direction.x, ray.direction.y, ray.direction.z);
             //rawImage.set(x,y,new Radiance3((ray.direction.x+1)/5, (ray.direction.y+1)/5, (ray.direction.z+1)/5));
 
+
             // Loop through the triangles, and find the closest one it intersects. Store radiance from that tracing.
             var minDist = Infinity;
             // Every pixel is dark blue by default.
@@ -234,11 +266,11 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
     var width = x1 - x0;
     var height = y1 - y0;
 
-    // Initialize depth buffer and pixels
+    // Initialize depth buffer and pixels for rasterized region of image.
     var depthBuffer = []; // array of numbers
-    for (var i = 0; i < width; i++) {
-        for (var j = 0; j < height; j++) {
-            depthBuffer[i + width * j] = Infinity;
+    for (var j = 0; j < (y1 - y0); j++) {
+        for (var i = 0; i < (x1 - x0); i++) {
+            depthBuffer[i + (x1 - x0) * j] = Infinity;
             // Every pixel is dark blue by default.
             rawImage.set(x0+i, y0+j, new Radiance3(0.02, 0.02, 0.05));
         }
@@ -249,7 +281,9 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
         var t = scene.triangles[i];
 
         // Loop through "bounding box" for that triangle, that is, pixels that could possibly see
-        // the triangle. Conservatively, loop through all pixels.
+        // the triangle.
+
+        // Conservatively, loop through all pixels.
         //var lowx = x0;
         //var highx = x1;
         //var lowy = y0;
@@ -258,44 +292,52 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
         // Fancier implementation: 2d axis-aligned box. Project all vertices of triangle to camera plane, and take
         // min/max of x/y there to get rectangle bounding the triangle image.
         // Note: no clipping.
-        var v0proj = ptToPx(t.vertex(0), rawImage.width, rawImage.height, camera.fieldOfViewX);
-        var v1proj = ptToPx(t.vertex(1), rawImage.width, rawImage.height, camera.fieldOfViewX);
-        var v2proj = ptToPx(t.vertex(2), rawImage.width, rawImage.height, camera.fieldOfViewX);
+        var v0px = ptToPxCoords(t.vertex(0), rawImage.width, rawImage.height, camera.fieldOfViewX);
+        var v1px = ptToPxCoords(t.vertex(1), rawImage.width, rawImage.height, camera.fieldOfViewX);
+        var v2px = ptToPxCoords(t.vertex(2), rawImage.width, rawImage.height, camera.fieldOfViewX);
 
-        // Use max/min of these vertices, but make sure we're within our chosen box to rasterize.
-        var lowx = Math.max(Math.min(v0proj.x, v1proj.x, v2proj.x, x1), x0);
-        var lowy = Math.max(Math.min(v0proj.y, v1proj.y, v2proj.y, y1), y0);
+        // Use max/min of these vertices, but make sure we're within our chosen box to rasterize. Convert to integers
+        // using floor/ceiling to get largest box to avoid cutting off endpoints.
+        var lowx = Math.floor(Math.max(Math.min(v0px.x, v1px.x, v2px.x, x1), x0));
+        var lowy = Math.floor(Math.max(Math.min(v0px.y, v1px.y, v2px.y, y1), y0));
 
-        var highx = Math.min(Math.max(v0proj.x, v1proj.x, v2proj.x, x0), x1);
-        var highy = Math.min(Math.max(v0proj.y, v1proj.y, v2proj.y, x0), y1);
+        var highx = Math.ceiling(Math.min(Math.max(v0px.x, v1px.x, v2px.x, x0), x1));
+        var highy = Math.ceiling(Math.min(Math.max(v0px.y, v1px.y, v2px.y, x0), y1));
+
+        // Also, compute "projection-scaled" direction vectors to vertices and normals at vertices for 2D interpolation
+        var w0proj = v3scale(1/(-t.vertex(0).z), t.vertex(0));
+        var w1proj = v3scale(1/(-t.vertex(1).z), t.vertex(1));
+        var w2proj = v3scale(1/(-t.vertex(2).z), t.vertex(2));
+
+        var n0proj = v3scale(1/(-t.vertex(0).z), t.normal(0));
+        var n1proj = v3scale(1/(-t.vertex(1).z), t.normal(1));
+        var n2proj = v3scale(1/(-t.vertex(2).z), t.normal(2));
 
         for (var y = lowy; y < highy; y++) {
             for (var x = lowx; x < highx; x++) {
-                // Get ray through that pixel
-                var ray = pxToRay(x, y, rawImage.width, rawImage.height, camera.zNear, camera.fieldOfViewX);
-                // calculate where (if at all) ray intersects triangle.
-                var iret = intersect(ray, t);
-                var d = iret.distance;
-                var bc = iret.barycoords;
-                // If it's closer than all previous triangles, re-shade accordingly and store in depth buffer.
-                if (d < depthBuffer[(x-x0) + width * (y-y0)]) {
-                    depthBuffer[(x-x0) + width * (y-y0)] = d;
-                    // compute point of intersection
-                    var pt = v3add(ray.origin, v3scale(d, ray.direction));
 
-                    // interpolate vertex normal using barycentric coords (for shading)
-                    var n = v3normalize(v3add(
-                        v3scale(bc[0], t.normal(0)),
-                        v3scale(bc[1], t.normal(1)),
-                        v3scale(bc[2], t.normal(2))));
+                // Compute 2d barycentric coords of this pixel center in projected triangle.
+                // Note that we need to use the true (not rounded) projected pixel coords for accurate interpolation.
+                var bc = bary2d(v0px, v1px, v2px, new Point2(x+0.5,y+0.5));
 
-                    // We shade based on vertex normal and opposite ray direction (the "physical ray")
-                    radiance = shade(scene, t, pt, n, v3scale(-1, ray.direction));
-                    // for testing: every intersection is white
-                    // radiance = new Radiance3(1, 1, 1);
-                    // for fancier testing: shade according to barycentric coords
-                    // radiance = new Radiance3(bc[0], bc[1], bc[2]);
+                // Interpolate depth of vertex (-z coord) in 3D triangle
+                var depth = bc[0]*(-t.vertex(0).z) + bc[1]*(-t.vertex(1).z) + bc[2]*(-t.vertex(2).z);
 
+                // Check if this is new closest triangle at that pixel.
+                if (depth < depthBuffer[x-x0 + (x1-x0)*(y-y0)]) {
+                    depthBuffer[x-x0 + (x1-x0)*(y-y0)] = depth;
+
+                    // Interpolate vertex direction and normal, and "de-projection-scale" using interpolated depth.
+                    var wproj = v3add(v3scale(bc[0], w0proj), v3scale(bc[1], w1proj), v3scale(bc[2], w2proj));
+                    var w = v3scale(depth, wproj);
+                    var nproj = v3add(v3scale(bc[0], n0proj), v3scale(bc[1], n1proj), v3scale(bc[2], n2proj));
+                    var n = v3scale(depth, nproj);
+
+                    // We shade based on vertex normal and opposite ray direction (the "physical ray"), which
+                    // we approximate with the reverse interpolated direction vector.
+                    // Note that we need to normalize w and n to have unit vectors because they were produced by the
+                    // "projection-scaled interpolation".
+                    radiance = shade(scene, t, w, v3normalize(n), v3scale(-1, v3normalize(w)));
                     rawImage.set(x, y, radiance);
                 }
             }

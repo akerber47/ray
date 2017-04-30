@@ -80,6 +80,38 @@ function v3dist(v1,v2) {
     return v3len(v3sub(v1,v2));
 }
 
+/* 2D functions too! */
+function v2add() {
+    var x = 0;
+    var y = 0;
+    for (var i = 0; i < arguments.length; i++) {
+        if (!(arguments[i] instanceof Vector2)) {
+            throw new TypeError("Expected vector arguments, received arguments[" + i + "]: " + arguments[i].toString());
+        }
+        x += arguments[i].x;
+        y += arguments[i].y;
+    }
+    return new Vector2(x, y);
+}
+
+function v2scale(k,v) {
+    if (!(typeof k == 'number' && v instanceof Vector2)) {
+        throw new TypeError("Expected scalar and vector, received: " + k.toString() + ", " + v.toString());
+    }
+    return new Vector3(k*v.x, k*v.y);
+}
+
+function v2dot(v1,v2) {
+    if (!(v1 instanceof Vector2 && v2 instanceof Vector2)) {
+        throw new TypeError("Expected two vectors, received: " + v1.toString() + ", " + v2.toString());
+    }
+    return v1.x*v2.x + v1.y*v2.y;
+}
+
+function v2sub(v1,v2) {
+    return v2add(v1,v2scale(-1,v2));
+}
+
 function Color3(r,g,b) {
     if (typeof r != 'number' || typeof g != 'number' || typeof b != 'number') {
         throw new TypeError("Expected scalar components, received: " +
