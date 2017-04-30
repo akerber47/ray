@@ -26,7 +26,8 @@
 
             var testData = ctx.getImageData(0,0,X,Y);
             var testImage = new RawImage(X, Y);
-            rayTrace(testScene2(), defaultCamera(), 0, X, 0, Y, testImage);
+            //rayTrace(testScene2(), defaultCamera(), 0, X, 0, Y, testImage);
+            rasterize(testScene2(), defaultCamera(), 0, X, 0, Y, testImage);
             encodeImageData(testImage, 1.0, testData);
             ctx.putImageData(testData,0,0);
 

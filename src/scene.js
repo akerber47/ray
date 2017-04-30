@@ -103,11 +103,11 @@ function testScene() {
                 v3normalize(new Vector3(-0.4,-0.4,1.0)),
                 v3normalize(new Vector3(0.4,-0.4,1.0))
             ],
-            // makeLambertianBsdf([0, 1.0, 0]) // matte green triangle
-            makeGlossyBsdf(
-                    [0, 0.8, 0], // matte green underneath
-                    [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss
-                    100)
+            makeLambertianBsdf([0, 1.0, 0]) // matte green triangle
+            //makeGlossyBsdf(
+            //        [0, 0.8, 0], // matte green underneath
+            //        [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss
+            //        100)
         )],
         [new Light(
             new Point3(1.0,3.0,1.0),
@@ -134,6 +134,7 @@ function testScene2() {
                 v3normalize(new Vector3(-0.4,-0.4,1.0)),
                 v3normalize(new Vector3(0.4,-0.4,1.0))
             ],
+            //makeLambertianBsdf([0, 1.0, 0])), // matte green triangle
             makeGlossyBsdf(
                 [0, 0.8, 0], // matte green underneath
                 [0.2, 0.2, 0.2], // shiny white (reflects all colors) gloss

@@ -202,3 +202,69 @@ function rayTrace(scene,camera,x0,x1,y0,y1,rawImage) {
         }
     }
 }
+
+/* Given a scene and camera, populate the given rawImage within the rectangle of
+ * the image given by (x0,y0) and (x1,y1) by rasterization. The rest of the rawImage is unmodified.
+ * If (x0,y0)=(0,0) and (x1,y1)=(rawImage.length, rawImage.width), this rasterizes the entire image.
+ */
+function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
+    var width = x1 - x0;
+    var height = y1 - y0;
+
+    // Initialize depth buffer and pixels
+    var depthBuffer = []; // array of numbers
+    for (var i = 0; i < width; i++) {
+        for (var j = 0; j < height; j++) {
+            depthBuffer[i + width * j] = Infinity;
+            // Every pixel is dark blue by default.
+            rawImage.set(x0+i, y0+j, new Radiance3(0.02, 0.02, 0.05));
+        }
+    }
+
+    // Loop through triangles
+    for (var i = 0; i < scene.triangles.length; i++) {
+        var t = scene.triangles[i];
+
+        // Loop through "bounding box" for that triangle, that is, pixels that could possibly see
+        // the triangle. Conservatively, loop through all pixels.
+        //var lowx = x0;
+        //var highx = x1;
+        //var lowy = y0;
+        //var highy = y1;
+
+        // Fancier implementation: 2d axis-aligned box. Project all vertices of triangle to camera plane, and take
+        // min/max of x/y there to get rectangle bounding the triangle image.
+
+        for (var y = lowy; y < highy; y++) {
+            for (var x = lowx; x < highx; x++) {
+                // Get ray through that pixel
+                var ray = pxToRay(x, y, rawImage.width, rawImage.height, camera.zNear, camera.fieldOfViewX);
+                // calculate where (if at all) ray intersects triangle.
+                var iret = intersect(ray, t);
+                var d = iret.distance;
+                var bc = iret.barycoords;
+                // If it's closer than all previous triangles, re-shade accordingly and store in depth buffer.
+                if (d < depthBuffer[(x-x0) + width * (y-y0)]) {
+                    depthBuffer[(x-x0) + width * (y-y0)] = d;
+                    // compute point of intersection
+                    var pt = v3add(ray.origin, v3scale(d, ray.direction));
+
+                    // interpolate vertex normal using barycentric coords (for shading)
+                    var n = v3normalize(v3add(
+                        v3scale(bc[0], t.normal(0)),
+                        v3scale(bc[1], t.normal(1)),
+                        v3scale(bc[2], t.normal(2))));
+
+                    // We shade based on vertex normal and opposite ray direction (the "physical ray")
+                    radiance = shade(scene, t, pt, n, v3scale(-1, ray.direction));
+                    // for testing: every intersection is white
+                    // radiance = new Radiance3(1, 1, 1);
+                    // for fancier testing: shade according to barycentric coords
+                    // radiance = new Radiance3(bc[0], bc[1], bc[2]);
+
+                    rawImage.set(x, y, radiance);
+                }
+            }
+        }
+    }
+}
