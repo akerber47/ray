@@ -119,15 +119,9 @@ describe("Converting points to pixels", function () {
         // 1x1 window should center the ray on the z=-1 plane, starting zNear away
         // from the origin along the negative z axis
         var zNear = -1e-7;
-        var pt = new Vector3(0, 0, zNear);
+        var pt = new Point3(0, 0, zNear);
 
-        expect(ptToPx(pt, 1, 1, zNear, 90)).toEqual(new Vector2(0, 0));
-
-        // still works with big/far away near plane
-        zNear = -100;
-        pt = new Vector3(0, 0, zNear);
-        expect(ptToPx(pt, 1, 1, zNear, 90)).toEqual(new Vector2(0, 0));
-
+        expect(ptToPx(pt, 1, 1, 90)).toEqual(new Vector2(0, 0));
     });
 
     it("2x2 window", function() {
@@ -136,29 +130,29 @@ describe("Converting points to pixels", function () {
         var fieldOfViewX = 2 * Math.atan(2);
 
         // point -0.1,0.1 should be pixel 0,0
-        var pt00 = new Vector3(-0.1,0.1,-0.1);
-        expect(ptToPx(pt00, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(0, 0));
+        var pt00 = new Point3(-0.1,0.1,-0.1);
+        expect(ptToPx(pt00, 2, 2, fieldOfViewX)).toEqual(new Vector2(0, 0));
 
         // point -0.1,-0.1 should be pixel 0,1
-        var pt01 = new Vector3(-0.1,-0.1,-0.1);
-        expect(ptToPx(pt01, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(0, 1));
+        var pt01 = new Point3(-0.1,-0.1,-0.1);
+        expect(ptToPx(pt01, 2, 2, fieldOfViewX)).toEqual(new Vector2(0, 1));
 
         // point 0.1,0.1 should be pixel 1,0
-        var pt10 = new Vector3(0.1,0.1,-0.1);
-        expect(ptToPx(pt10, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(1, 0));
+        var pt10 = new Point3(0.1,0.1,-0.1);
+        expect(ptToPx(pt10, 2, 2, fieldOfViewX)).toEqual(new Vector2(1, 0));
 
         // point 0.1,-0.1 should be pixel 1,1
-        var pt11 = new Vector3(0.1,-0.1,-0.1);
-        expect(ptToPx(pt11, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(1, 1));
+        var pt11 = new Point3(0.1,-0.1,-0.1);
+        expect(ptToPx(pt11, 2, 2, fieldOfViewX)).toEqual(new Vector2(1, 1));
 
         // points in between round correctly
-        var pt = new Vector3(0.07, -0.01, -0.1);
-        expect(ptToPx(pt, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(1, 1));
-        pt = new Vector3(0.07, 0.01, -0.1);
-        expect(ptToPx(pt, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(1, 0));
+        var pt = new Point3(0.07, -0.01, -0.1);
+        expect(ptToPx(pt, 2, 2, fieldOfViewX)).toEqual(new Vector2(1, 1));
+        pt = new Point3(0.07, 0.01, -0.1);
+        expect(ptToPx(pt, 2, 2, fieldOfViewX)).toEqual(new Vector2(1, 0));
 
         // points outside pixel box still produce integer values (albeit invalid ones)
-        pt = new Vector3(0.2, 0.2, -0.1);
-        expect(ptToPx(pt, 2, 2, -0.1, fieldOfViewX)).toEqual(new Vector2(2, -1));
+        pt = new Point3(0.2, 0.2, -0.1);
+        expect(ptToPx(pt, 2, 2, fieldOfViewX)).toEqual(new Vector2(2, -1));
     });
 });

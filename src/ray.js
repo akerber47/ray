@@ -34,7 +34,7 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
 /* Given a point in space, image dimensions, and some camera attributes, compute the
  * corresponding pixel x and y. Inverse of above function, sort of.
  */
-function ptToPx(pt,width,height,zNear,fieldOfViewX) {
+function ptToPx(pt,width,height,fieldOfViewX) {
     var aspect = height / width;
 
     // Project pt along line thru origin onto z = -1 plane.
@@ -257,6 +257,17 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
 
         // Fancier implementation: 2d axis-aligned box. Project all vertices of triangle to camera plane, and take
         // min/max of x/y there to get rectangle bounding the triangle image.
+        // Note: no clipping.
+        var v0proj = ptToPx(t.vertex(0), rawImage.width, rawImage.height, camera.fieldOfViewX);
+        var v1proj = ptToPx(t.vertex(1), rawImage.width, rawImage.height, camera.fieldOfViewX);
+        var v2proj = ptToPx(t.vertex(2), rawImage.width, rawImage.height, camera.fieldOfViewX);
+
+        // Use max/min of these vertices, but make sure we're within our chosen box to rasterize.
+        var lowx = Math.max(Math.min(v0proj.x, v1proj.x, v2proj.x, x1), x0);
+        var lowy = Math.max(Math.min(v0proj.y, v1proj.y, v2proj.y, y1), y0);
+
+        var highx = Math.min(Math.max(v0proj.x, v1proj.x, v2proj.x, x0), x1);
+        var highy = Math.min(Math.max(v0proj.y, v1proj.y, v2proj.y, x0), y1);
 
         for (var y = lowy; y < highy; y++) {
             for (var x = lowx; x < highx; x++) {
