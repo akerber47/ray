@@ -31,6 +31,29 @@ function pxToRay(x,y,width,height,zNear,fieldOfViewX) {
     return new Ray(v3scale(-zNear, rayv), v3normalize(rayv));
 }
 
+/* Given a point in space, image dimensions, and some camera attributes, compute the
+ * corresponding pixel x and y. Inverse of above function, sort of.
+ */
+function ptToPx(pt,width,height,zNear,fieldOfViewX) {
+    var aspect = height / width;
+
+    // Project pt along line thru origin onto z = -1 plane.
+    var projX = pt.x / (-pt.z);
+    var projY = pt.y / (-pt.z);
+
+    // Un-scale for camera field of view, to point in square [-1,1]x[-1,1]x{-1}. Remember to flip y axis for pixels.
+    // Note, of course, that projection might not actually be in the square. But we just want the points that
+    // do land in the square to be calculated correctly.
+    var sqX = projX / Math.tan(fieldOfViewX * 0.5);
+    var sqY = -projY / (Math.tan(fieldOfViewX * 0.5) * aspect);
+
+    // Round and convert to nearest pixel center
+    var x = Math.round((((sqX / 2.0) + 0.5) * width) - 0.5);
+    var y = Math.round((((sqY / 2.0) + 0.5) * height) - 0.5);
+
+    return new Vector2(x, y);
+}
+
 /* Given a ray and triangle, compute the barycentric coordinates of the point in the triangle
  * where the ray intersects it, and the distance from the ray origin to that point. If the ray
  * doesn't intersect it or it's within floating point errors, return Infinity for distance. In
