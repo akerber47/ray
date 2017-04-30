@@ -301,8 +301,8 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
         var lowx = Math.floor(Math.max(Math.min(v0px.x, v1px.x, v2px.x, x1), x0));
         var lowy = Math.floor(Math.max(Math.min(v0px.y, v1px.y, v2px.y, y1), y0));
 
-        var highx = Math.ceiling(Math.min(Math.max(v0px.x, v1px.x, v2px.x, x0), x1));
-        var highy = Math.ceiling(Math.min(Math.max(v0px.y, v1px.y, v2px.y, x0), y1));
+        var highx = Math.ceil(Math.min(Math.max(v0px.x, v1px.x, v2px.x, x0), x1));
+        var highy = Math.ceil(Math.min(Math.max(v0px.y, v1px.y, v2px.y, x0), y1));
 
         // Also, compute "projection-scaled" direction vectors to vertices and normals at vertices for 2D interpolation
         var w0proj = v3scale(1/(-t.vertex(0).z), t.vertex(0));
@@ -320,25 +320,30 @@ function rasterize(scene,camera,x0,x1,y0,y1,rawImage) {
                 // Note that we need to use the true (not rounded) projected pixel coords for accurate interpolation.
                 var bc = bary2d(v0px, v1px, v2px, new Point2(x+0.5,y+0.5));
 
-                // Interpolate depth of vertex (-z coord) in 3D triangle
-                var depth = bc[0]*(-t.vertex(0).z) + bc[1]*(-t.vertex(1).z) + bc[2]*(-t.vertex(2).z);
+                // Check if all barycentric coordinates positive, ie this bounding box pixel
+                // actually has center inside the triangle!
+                if (bc[0] > 0 && bc[1] > 0 && bc[2] > 0) {
 
-                // Check if this is new closest triangle at that pixel.
-                if (depth < depthBuffer[x-x0 + (x1-x0)*(y-y0)]) {
-                    depthBuffer[x-x0 + (x1-x0)*(y-y0)] = depth;
+                    // Interpolate depth of vertex (-z coord) in 3D triangle
+                    var depth = bc[0] * (-t.vertex(0).z) + bc[1] * (-t.vertex(1).z) + bc[2] * (-t.vertex(2).z);
 
-                    // Interpolate vertex direction and normal, and "de-projection-scale" using interpolated depth.
-                    var wproj = v3add(v3scale(bc[0], w0proj), v3scale(bc[1], w1proj), v3scale(bc[2], w2proj));
-                    var w = v3scale(depth, wproj);
-                    var nproj = v3add(v3scale(bc[0], n0proj), v3scale(bc[1], n1proj), v3scale(bc[2], n2proj));
-                    var n = v3scale(depth, nproj);
+                    // Check if this is new closest triangle at that pixel.
+                    if (depth < depthBuffer[x - x0 + (x1 - x0) * (y - y0)]) {
+                        depthBuffer[x - x0 + (x1 - x0) * (y - y0)] = depth;
 
-                    // We shade based on vertex normal and opposite ray direction (the "physical ray"), which
-                    // we approximate with the reverse interpolated direction vector.
-                    // Note that we need to normalize w and n to have unit vectors because they were produced by the
-                    // "projection-scaled interpolation".
-                    radiance = shade(scene, t, w, v3normalize(n), v3scale(-1, v3normalize(w)));
-                    rawImage.set(x, y, radiance);
+                        // Interpolate vertex direction and normal, and "de-projection-scale" using interpolated depth.
+                        var wproj = v3add(v3scale(bc[0], w0proj), v3scale(bc[1], w1proj), v3scale(bc[2], w2proj));
+                        var w = v3scale(depth, wproj);
+                        var nproj = v3add(v3scale(bc[0], n0proj), v3scale(bc[1], n1proj), v3scale(bc[2], n2proj));
+                        var n = v3scale(depth, nproj);
+
+                        // We shade based on vertex normal and opposite ray direction (the "physical ray"), which
+                        // we approximate with the reverse interpolated direction vector.
+                        // Note that we need to normalize w and n to have unit vectors because they were produced by the
+                        // "projection-scaled interpolation".
+                        radiance = shade(scene, t, w, v3normalize(n), v3scale(-1, v3normalize(w)));
+                        rawImage.set(x, y, radiance);
+                    }
                 }
             }
         }

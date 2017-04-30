@@ -98,7 +98,7 @@ function v2scale(k,v) {
     if (!(typeof k == 'number' && v instanceof Vector2)) {
         throw new TypeError("Expected scalar and vector, received: " + k.toString() + ", " + v.toString());
     }
-    return new Vector3(k*v.x, k*v.y);
+    return new Vector2(k*v.x, k*v.y);
 }
 
 function v2dot(v1,v2) {
