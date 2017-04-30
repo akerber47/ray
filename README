@@ -1,5 +1,6 @@
-A really bad ray tracer. Based on Ch 15 of the big graphics book (Foley et al).
-Implemented in (vanilla) Javascript, outputs to an HTML canvas.
+A really bad ray tracer and rasterizer. Based on Ch 15 of the big graphics book
+(Foley et al).  Implemented in (vanilla) Javascript, outputs to an HTML canvas.
+Uses my own code for vector calculations, ray-triangle intersections, etc.
 
 Requires Jasmine for unit testing (test.html) to work. Download and install it
 manually in the jasmine subdirectory of the source folder. I'm too lazy to
